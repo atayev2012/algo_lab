@@ -1,7 +1,8 @@
 #include <vector>
 #include <iostream>
-//#include <math.h>
+#include <math.h>
 #include <iomanip>
+#include <chrono>
 
 const size_t N = 8192;
 
@@ -33,20 +34,6 @@ bool linear_search(std::vector<std::vector<int>> matrix, int target){
     return false;
 }
 
-// binary search on a row of data
-unsigned long binary_search_row(std::vector<int> row, int target, size_t& end){
-    size_t start = 0;
-    while(start<end){
-        size_t middle = (start + end + 1)/2;
-        if(row[middle] <= target){
-            start = middle;
-        }else{
-            end = middle - 1;
-        }
-    }
-    return start;
-}
-
 // binary search on a matrix
 bool binary_search_matrix(std::vector<std::vector<int>> matrix, int target){
     size_t m = matrix.size(), n = matrix[0].size();
@@ -63,46 +50,30 @@ bool binary_search_matrix(std::vector<std::vector<int>> matrix, int target){
         // if target is smaller than current value, then perform binary_search on a row
         // otherwise move down
         if(matrix[row][col] > target) {
-            size_t end = col;
-            size_t pos = binary_search_row(matrix[row], target, end);
+            size_t end = col, start = 0;
+            while(start<end){
+                size_t middle = (start + end + 1) / 2;
+                if(matrix[row][middle] <= target){
+                    start = middle;
+                }else{
+                    end = middle - 1;
+                }
+            }
 
-            if(matrix[row][pos] == target){
+            if(matrix[row][start] == target){
                 return true;
             }
 
-            if(matrix[row][pos] > target && pos == 0){
-                row = n;
+            if(matrix[row][start] > target && start == 0){
+                break;
             }
-            col = pos;
+            col = start;
 
         }else{
             row++;
         }
     }
     return false;
-}
-
-
-// exponential search on a row
-unsigned long exponential_search_row(std::vector<int> row, int target, size_t col){
-    int step = 1;
-    size_t pos = col;
-
-    while(pos >= 0){
-        if(row[pos] < target){
-            break;
-        }
-        pos -= step;
-        step *= 2;
-    }
-
-    size_t start, end;
-    start = std::max(static_cast<int>(pos), 0);
-    end = std::min((pos + step), row.size() - 1);
-
-    start = binary_search_row(row,target,end);
-
-    return start;
 }
 
 // exponential search on a matrix
@@ -121,14 +92,36 @@ bool exponential_search_matrix(std::vector<std::vector<int>> matrix, int target)
         // if target is smaller than current value, then perform exponential_search on a row
         // otherwise move down
         if(matrix[row][col] > target) {
-            size_t pos = exponential_search_row(matrix[row], target, col);
+            int step = 1;
+            size_t pos = col;
+
+            while(pos >- 0){
+                if(matrix[row][pos] < target){
+                    break;
+                }
+                pos -= step;
+                step *= 2;
+            }
+
+            size_t start, end;
+            start = std::max(static_cast<int>(pos), 0);
+            end = std::min((pos + step), matrix[row].size() - 1);
+
+            while(start < end){
+                size_t middle = (start + end + 1)/2;
+                if(matrix[row][middle] <= target){
+                    start = middle;
+                }else{
+                    end = middle - 1;
+                }
+            }
 
             if(matrix[row][pos] == target){
                 return true;
             }
 
-            if(matrix[row][pos] > target && col == 0){
-                row = m;
+            if(matrix[row][pos] > target && pos == 0){
+                break;
             }
             col = pos;
         }else{
